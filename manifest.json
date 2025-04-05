@@ -3,7 +3,6 @@
 	"name": "Bye-Bye-Mouse",
 	"version": "0.1.0",
 	"description": "Navigate web pages using Vim-like keys (h, j, k, l).",
-	"permissions": ["activeTab", "scripting", "storage"],
 	"background": {
 		"scripts": ["background.js"]
 	},

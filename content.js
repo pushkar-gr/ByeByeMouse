@@ -156,16 +156,6 @@
 		}
 
 		switch (event.key) {
-			// case "j": //scroll down
-			// 	window.scrollBy(0, scrollAmount);
-			// 	event.preventDefault();
-			// 	event.stopPropagation();
-			// 	break;
-			// case "k": //scroll up
-			// 	window.scrollBy(0, -scrollAmount);
-			// 	event.preventDefault();
-			// 	event.stopPropagation();
-			// 	break;
 			case "l": //select next element
 				handleHorizontalNavigation("l");
 				event.preventDefault();
@@ -177,19 +167,20 @@
 				event.stopPropagation();
 				break;
 			case "Escape": //exit navigation
-				navigationEnabled = false;
-				lastSelectedIndex = -1;
+				browser.runtime.sendMessage({
+					action: "updateBackgroundState",
+					state: false,
+				});
 				if (document.activeElement) {
 					document.activeElement.blur();
 				}
-				console.log("Bye Bye Mouse disabled.");
 				event.preventDefault();
 				event.stopPropagation();
 				break;
 		}
 	}
 
-  //handle scrolling
+	//handle scrolling
 	function handleScroll(direction) {
 		if (!isScrolling) {
 			window.scrollBy(0, direction * currentSpeed);
@@ -201,27 +192,26 @@
 		window.scrollBy(0, direction * currentSpeed);
 	}
 
-	//toggle navigation
-	document.addEventListener("keydown", (event) => {
-		if (event.ctrlKey && event.key === " ") {
-			navigationEnabled = !navigationEnabled;
-			if (!navigationEnabled) {
-				if (document.activeElement) {
-					document.activeElement.blur();
-				}
-				console.log("Bye Bye Mouse disabled.");
-				event.preventDefault();
-				event.stopPropagation();
-			} else {
-				handleHorizontalNavigation();
-				console.log("Bye Bye Mouse enabled (scroll/focus).");
-				event.preventDefault();
-				event.stopPropagation();
+	//update navigation
+	function update(enable) {
+		navigationEnabled = enable;
+		if (!navigationEnabled) {
+			if (document.activeElement) {
+				document.activeElement.blur();
 			}
+			console.log("Bye Bye Mouse disabled.");
+		} else {
+			handleHorizontalNavigation();
+			console.log("Bye Bye Mouse enabled (scroll/focus).");
 		}
-	});
+	}
 
-  //start scrolling
+	//toggle navigation
+	function toggle() {
+		update(!navigationEnabled);
+	}
+
+	//start scrolling
 	document.addEventListener("keydown", (event) => {
 		if (navigationEnabled && ["j", "k"].includes(event.key)) {
 			event.preventDefault();
@@ -240,7 +230,7 @@
 		}
 	});
 
-  //stop scrolling
+	//stop scrolling
 	document.addEventListener("keyup", (event) => {
 		if (["j", "k"].includes(event.key)) {
 			if (scrollInterval) {
@@ -254,4 +244,27 @@
 
 	//listen to user input
 	document.addEventListener("keydown", handleKeyDown);
+
+	//toggle navigation
+	document.addEventListener("keydown", (event) => {
+		if (event.ctrlKey && event.key === " ") {
+			browser.runtime.sendMessage({
+				action: "updateBackgroundState",
+				state: !navigationEnabled,
+			});
+			// toggle();
+			event.preventDefault();
+			event.stopPropagation();
+		}
+	});
+
+	browser.runtime.onMessage.addListener((request) => {
+		if (request.action === "updateContentState") {
+			console.log(
+				"Content Script: Received updateState message:",
+				request.state,
+			);
+			update(request.state);
+		}
+	});
 })();

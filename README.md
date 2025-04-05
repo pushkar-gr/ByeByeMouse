@@ -21,7 +21,7 @@ Tired of constantly switching between your keyboard and mouse? ByeByeMouse lets 
 
 1.  **Clone the Repository:**
     ```bash
-    git clone <repository_url>
+    git clone https://github.com/pushkar-gr/ByeByeMouse.git
     cd ByeByeMouse
     ```
 2.  **Open Firefox's Debugging Page:**
@@ -43,15 +43,6 @@ Tired of constantly switching between your keyboard and mouse? ByeByeMouse lets 
 3.  **Disable Navigation:**
     * Click the ByeByeMouse icon again.
     * or press `Ctrl + Space` (or `Cmd + Space`).
-
-## Future Enhancements
-
-* **Customizable Keybindings:** Allow users to remap keyboard shortcuts.
-* **Visual Indicators:** Provide clearer visual feedback for the currently focused element.
-* **Search and Focus:** Implement a feature to search for and focus on specific elements.
-* **More Granular Scrolling:** add pageUp, pageDown, home, and end functionality.
-* **Clicking Functionality:** Add a key to simulate a mouse click on the focused element.
-* **Cross Browser Support:** Add support for Chrome and other browsers.
 
 ## Contributing
 

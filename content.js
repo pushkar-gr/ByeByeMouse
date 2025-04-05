@@ -84,51 +84,40 @@
 			return;
 		}
 
-		const startIndex = focusableElements.indexOf(lastFocusedElement);
+		const startIndex = Math.max(
+			focusableElements.indexOf(lastFocusedElement),
+			0,
+		);
 		const relativePos = getElementViewframePosition(lastFocusedElement);
 		let nextVisibleIndex = -1;
 
-		//if element not found or element not in viewframe
-		if (startIndex !== -1 && relativePos !== 0) {
-			//element is above viewframe
-			if (relativePos === -1) {
-				for (let i = startIndex; i < focusableElements.length; i++) {
-					if (
-						getElementViewframePosition(focusableElements[i]) === 0 &&
-						focusableElements.includes(focusableElements[i])
-					) {
-						nextVisibleIndex = focusableElements.indexOf(focusableElements[i]);
-						break;
-					}
-				}
-			} else if (relativePos === 1) {
-				//element is below viewframe
-				for (let i = startIndex; i >= 0; i--) {
-					if (
-						getElementViewframePosition(focusableElements[i]) === 0 &&
-						focusableElements.includes(focusableElements[i])
-					) {
-						const actualIndexInVisible = focusableElements.indexOf(
-							focusableElements[i],
-						);
-						nextVisibleIndex =
-							actualIndexInVisible !== -1
-								? actualIndexInVisible
-								: focusableElements.length > 0
-								? focusableElements.length - 1
-								: -1;
-						break;
-					}
+		if (direction === "l" || relativePos === -1) {
+			for (let i = startIndex + 1; i < focusableElements.length; i++) {
+				if (
+					getElementViewframePosition(focusableElements[i]) === 0 &&
+					focusableElements.includes(focusableElements[i])
+				) {
+					nextVisibleIndex = focusableElements.indexOf(focusableElements[i]);
+					break;
 				}
 			}
-		} else {
-			//element in viewframe
-			if (direction === "l") {
-				nextVisibleIndex = startIndex + 1;
-			} else if (direction === "h") {
-				nextVisibleIndex = startIndex - 1;
-			} else {
-				nextVisibleIndex = startIndex;
+		} else if (direction === "h" || relativePos === 1) {
+			for (let i = startIndex - 1; i >= 0; i--) {
+				if (
+					getElementViewframePosition(focusableElements[i]) === 0 &&
+					focusableElements.includes(focusableElements[i])
+				) {
+					const actualIndexInVisible = focusableElements.indexOf(
+						focusableElements[i],
+					);
+					nextVisibleIndex =
+						actualIndexInVisible !== -1
+							? actualIndexInVisible
+							: focusableElements.length > 0
+							? focusableElements.length - 1
+							: -1;
+					break;
+				}
 			}
 		}
 
@@ -206,11 +195,6 @@
 		}
 	}
 
-	//toggle navigation
-	function toggle() {
-		update(!navigationEnabled);
-	}
-
 	//start scrolling
 	document.addEventListener("keydown", (event) => {
 		if (navigationEnabled && ["j", "k"].includes(event.key)) {
@@ -252,7 +236,6 @@
 				action: "updateBackgroundState",
 				state: !navigationEnabled,
 			});
-			// toggle();
 			event.preventDefault();
 			event.stopPropagation();
 		}

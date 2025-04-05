@@ -4,9 +4,14 @@
 	}
 	window.hasVimNavigation = true;
 	let navigationEnabled = false;
-	const scrollAmount = 100;
 	let lastFocusedElement = null;
 	let focusableElements = [];
+
+	let scrollInterval = null;
+	let currentSpeed = 100; // Base speed
+	const acceleration = 1.2; // Speed multiplier per interval
+	const maxSpeed = 800; // Maximum scroll speed
+	let isScrolling = false;
 
 	//check if element is a header/footer/navigation
 	function isElementInAllowedContent(element) {
@@ -96,7 +101,8 @@
 						break;
 					}
 				}
-			} else if (relativePos === 1) { //element is below viewframe
+			} else if (relativePos === 1) {
+				//element is below viewframe
 				for (let i = startIndex; i >= 0; i--) {
 					if (
 						getElementViewframePosition(focusableElements[i]) === 0 &&
@@ -115,7 +121,8 @@
 					}
 				}
 			}
-		} else { //element in viewframe
+		} else {
+			//element in viewframe
 			if (direction === "l") {
 				nextVisibleIndex = startIndex + 1;
 			} else if (direction === "h") {
@@ -149,22 +156,22 @@
 		}
 
 		switch (event.key) {
-			case "j":	//scroll down
-				window.scrollBy(0, scrollAmount);
-				event.preventDefault();
-				event.stopPropagation();
-				break;
-			case "k":	//scroll up
-				window.scrollBy(0, -scrollAmount);
-				event.preventDefault();
-				event.stopPropagation();
-				break;
-			case "l":	//select next element
+			// case "j": //scroll down
+			// 	window.scrollBy(0, scrollAmount);
+			// 	event.preventDefault();
+			// 	event.stopPropagation();
+			// 	break;
+			// case "k": //scroll up
+			// 	window.scrollBy(0, -scrollAmount);
+			// 	event.preventDefault();
+			// 	event.stopPropagation();
+			// 	break;
+			case "l": //select next element
 				handleHorizontalNavigation("l");
 				event.preventDefault();
 				event.stopPropagation();
 				break;
-			case "h":	//select previous element
+			case "h": //select previous element
 				handleHorizontalNavigation("h");
 				event.preventDefault();
 				event.stopPropagation();
@@ -182,7 +189,19 @@
 		}
 	}
 
-  //toggle navigation
+  //handle scrolling
+	function handleScroll(direction) {
+		if (!isScrolling) {
+			window.scrollBy(0, direction * currentSpeed);
+			isScrolling = true;
+		}
+
+		currentSpeed = Math.min(currentSpeed * acceleration, maxSpeed);
+
+		window.scrollBy(0, direction * currentSpeed);
+	}
+
+	//toggle navigation
 	document.addEventListener("keydown", (event) => {
 		if (event.ctrlKey && event.key === " ") {
 			navigationEnabled = !navigationEnabled;
@@ -202,6 +221,37 @@
 		}
 	});
 
-  //listen to user input
+  //start scrolling
+	document.addEventListener("keydown", (event) => {
+		if (["j", "k"].includes(event.key)) {
+			event.preventDefault();
+			event.stopPropagation();
+
+			const direction = event.key === "j" ? 1 : -1;
+
+			if (!scrollInterval) {
+				currentSpeed = 100; //reset speed on new key press
+				handleScroll(direction);
+
+				scrollInterval = setInterval(() => {
+					handleScroll(direction);
+				}, 200); //update speed every 200ms
+			}
+		}
+	});
+
+  //stop scrolling
+	document.addEventListener("keyup", (event) => {
+		if (["j", "k"].includes(event.key)) {
+			if (scrollInterval) {
+				clearInterval(scrollInterval);
+				scrollInterval = null;
+				currentSpeed = 100;
+				isScrolling = false;
+			}
+		}
+	});
+
+	//listen to user input
 	document.addEventListener("keydown", handleKeyDown);
 })();

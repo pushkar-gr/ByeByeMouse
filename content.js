@@ -243,10 +243,6 @@
 
 	browser.runtime.onMessage.addListener((request) => {
 		if (request.action === "updateContentState") {
-			console.log(
-				"Content Script: Received updateState message:",
-				request.state,
-			);
 			update(request.state);
 		}
 	});

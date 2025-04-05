@@ -223,7 +223,7 @@
 
   //start scrolling
 	document.addEventListener("keydown", (event) => {
-		if (["j", "k"].includes(event.key)) {
+		if (navigationEnabled && ["j", "k"].includes(event.key)) {
 			event.preventDefault();
 			event.stopPropagation();
 

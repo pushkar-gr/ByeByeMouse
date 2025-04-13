@@ -172,13 +172,19 @@
 	//handle scrolling
 	function handleScroll(direction) {
 		if (!isScrolling) {
-			window.scrollBy(0, direction * currentSpeed);
+			window.scrollBy({
+				top: direction * currentSpeed,
+				behavior: "smooth",
+			});
 			isScrolling = true;
 		}
 
 		currentSpeed = Math.min(currentSpeed * acceleration, maxSpeed);
 
-		window.scrollBy(0, direction * currentSpeed);
+		window.scrollBy({
+			top: direction * currentSpeed,
+			behavior: "smooth",
+		});
 	}
 
 	//update navigation

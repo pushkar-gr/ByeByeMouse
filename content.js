@@ -4,8 +4,15 @@
 	}
 	window.hasVimNavigation = true;
 	let navigationEnabled = false;
+	let searchModeActive = false;
 	let lastFocusedElement = null;
 	let focusableElements = [];
+
+	//search functionality variables
+	let searchResults = [];
+	let currentSearchIndex = -1;
+	let searchBox = null;
+	let currentHighlightedElement = null;
 
 	let scrollInterval = null;
 	let currentSpeed = 100; //base speed
@@ -28,8 +35,8 @@
 		return !element.closest(EXCLUDED_SELECTORS);
 	}
 
-	//get all the visible, interactive elements from the webpage that are not part of header/footer/navigation
-	function getVisibleFocusableElements() {
+	//get all focusable elements even if they're not visible in the viewport
+	function getAllFocusableElements() {
 		return Array.from(
 			document.querySelectorAll(
 				"a[href], button, input:not([type='hidden']), textarea, select, [contenteditable='true'], [tabindex]:not([tabindex='-1'])",
@@ -54,22 +61,26 @@
 				return false;
 			}
 
-			//check if the element is within the viewport
-			if (
-				rect.bottom < 0 ||
-				rect.right < 0 ||
-				rect.top > window.innerHeight ||
-				rect.left > window.innerWidth
-			) {
-				return false;
-			}
-
 			//check if element is truly visible and not behind other elements
 			if (!isActuallyVisible(element)) {
 				return false;
 			}
 
 			return true;
+		});
+	}
+
+	//get all the visible, interactive elements from the webpage that are in the viewport
+	function getVisibleFocusableElements() {
+		return getAllFocusableElements().filter((element) => {
+			const rect = element.getBoundingClientRect();
+			//check if the element is within the viewport
+			return !(
+				rect.bottom < 0 ||
+				rect.right < 0 ||
+				rect.top > window.innerHeight ||
+				rect.left > window.innerWidth
+			);
 		});
 	}
 
@@ -124,20 +135,28 @@
 		const centerX = rect.left + rect.width / 2;
 		const centerY = rect.top + rect.height / 2;
 
-		//get the top-most element at the center point of our target
-		const topElement = document.elementFromPoint(centerX, centerY);
-
-		//if the element or any of its children isn't the top element, then it's covered
+		//only check if the element is actually in the viewport
 		if (
-			topElement &&
-			!element.contains(topElement) &&
-			!topElement.contains(element)
+			centerX >= 0 &&
+			centerX <= window.innerWidth &&
+			centerY >= 0 &&
+			centerY <= window.innerHeight
 		) {
-			//check if the topmost element is a transparent overlay
-			const topElStyle = getComputedStyle(topElement);
-			if (parseFloat(topElStyle.opacity) > 0.1) {
-				//allow slightly transparent overlays
-				return false;
+			//get the top-most element at the center point of our target
+			const topElement = document.elementFromPoint(centerX, centerY);
+
+			//if the element or any of its children isn't the top element, then it's covered
+			if (
+				topElement &&
+				!element.contains(topElement) &&
+				!topElement.contains(element)
+			) {
+				//check if the topmost element is a transparent overlay
+				const topElStyle = getComputedStyle(topElement);
+				if (parseFloat(topElStyle.opacity) > 0.1) {
+					//allow slightly transparent overlays
+					return false;
+				}
 			}
 		}
 
@@ -173,6 +192,49 @@
 
 			//update last focused element reference
 			lastFocusedElement = element;
+
+			//ensure the element is visible in the viewport
+			ensureElementIsVisible(element);
+		}
+	}
+
+	//ensure element is visible in viewport
+	function ensureElementIsVisible(element) {
+		const rect = element.getBoundingClientRect();
+
+		//check if the element is outside the viewport
+		if (
+			rect.top < 0 ||
+			rect.left < 0 ||
+			rect.bottom > window.innerHeight ||
+			rect.right > window.innerWidth
+		) {
+			//scroll the element into view
+			element.scrollIntoView({
+				block: "nearest",
+				behavior: "smooth",
+			});
+		}
+	}
+
+	//highlight element without focusing it
+	function highlightElement(element, isSearchResult = false) {
+		if (element) {
+			//add highlight class to the element
+			if (isSearchResult) {
+				element.classList.add("search-result");
+			} else {
+				//remove highlight from previously highlighted element
+				if (currentHighlightedElement) {
+					currentHighlightedElement.classList.remove("highlight-focus");
+				}
+
+				//add highlight to newly highlighted element
+				element.classList.add("highlight-focus");
+
+				//update highlighted element reference
+				currentHighlightedElement = element;
+			}
 		}
 	}
 
@@ -191,6 +253,19 @@
 		if (document.activeElement && document.activeElement !== document.body) {
 			document.activeElement.blur();
 		}
+	}
+
+	//remove all highlights without changing focus
+	function clearHighlights() {
+		if (currentHighlightedElement) {
+			currentHighlightedElement.classList.remove("highlight-focus");
+			currentHighlightedElement = null;
+		}
+
+		//clear all search result highlights
+		document.querySelectorAll(".search-result").forEach((element) => {
+			element.classList.remove("search-result");
+		});
 	}
 
 	//get element's relative position wrt to viewframe
@@ -279,13 +354,302 @@
 		}
 	}
 
+	//create search box UI
+	function createSearchBox() {
+		//create search container if it doesn't exist
+		if (!searchBox) {
+			searchBox = document.createElement("div");
+			searchBox.id = "byebyemouse-search";
+			searchBox.style.cssText = `
+				position: fixed;
+				top: 10px;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 999999;
+				background-color: #333;
+				color: #fff;
+				padding: 10px;
+				border-radius: 5px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+				display: flex;
+				align-items: center;
+				font-family: system-ui, -apple-system, sans-serif;
+			`;
+
+			//create search label
+			const searchLabel = document.createElement("span");
+			searchLabel.textContent = "Search: ";
+			searchLabel.style.marginRight = "5px";
+			searchBox.appendChild(searchLabel);
+
+			//create input field
+			const searchInput = document.createElement("input");
+			searchInput.type = "text";
+			searchInput.id = "byebyemouse-search-input";
+			searchInput.style.cssText = `
+				padding: 5px;
+				border: none;
+				border-radius: 3px;
+				outline: none;
+				width: 300px;
+				font-size: 14px;
+			`;
+			searchBox.appendChild(searchInput);
+
+			//add search info
+			const searchInfo = document.createElement("span");
+			searchInfo.id = "byebyemouse-search-info";
+			searchInfo.style.marginLeft = "10px";
+			searchInfo.style.fontSize = "12px";
+			searchInfo.style.opacity = "0.8";
+			searchBox.appendChild(searchInfo);
+
+			//add keydown event listener to the input
+			searchInput.addEventListener("keydown", (event) => {
+				if (event.key === "Enter" && searchModeActive) {
+					//focus the currently highlighted element
+					if (currentHighlightedElement) {
+						focusElement(currentHighlightedElement);
+					}
+					//hide search box but keep search results available for navigation
+					hideSearchBox();
+					event.preventDefault();
+					event.stopPropagation();
+				} else if (event.key === "Escape") {
+					//exit search mode, return to navigation mode
+					exitSearchMode();
+					event.preventDefault();
+					event.stopPropagation();
+				}
+			});
+
+			//add input event to search as you type
+			searchInput.addEventListener(
+				"input",
+				debounce(() => {
+					performSearch(searchInput.value);
+				}, 300),
+			);
+		}
+
+		//insert styles for search results
+		const style = document.createElement("style");
+		style.textContent = `
+			.search-result {
+				outline: 2px dashed #4d90fe !important;
+				background-color: rgba(77, 144, 254, 0.1) !important;
+			}
+			.highlight-focus {
+				outline: 2px solid #4d90fe !important;
+				box-shadow: 0 0 5px rgba(77, 144, 254, 0.8) !important;
+				background-color: rgba(77, 144, 254, 0.2) !important;
+				transition: all 0.2s ease-in-out !important;
+			}
+		`;
+		document.head.appendChild(style);
+
+		document.body.appendChild(searchBox);
+		document.getElementById("byebyemouse-search-input").focus();
+	}
+
+	//debounce function to limit how often a function is called
+	function debounce(func, wait) {
+		let timeout;
+		return function executedFunction(...args) {
+			const later = () => {
+				clearTimeout(timeout);
+				func(...args);
+			};
+			clearTimeout(timeout);
+			timeout = setTimeout(later, wait);
+		};
+	}
+
+	//hide search box
+	function hideSearchBox() {
+		if (searchBox && searchBox.parentNode) {
+			searchBox.parentNode.removeChild(searchBox);
+			searchModeActive = false;
+		}
+	}
+
+	//exit search mode and return to navigation
+	function exitSearchMode() {
+		hideSearchBox();
+		searchModeActive = false;
+		clearHighlights();
+		if (lastFocusedElement) {
+			focusElement(lastFocusedElement);
+		}
+	}
+
+	//perform search based on input text
+	function performSearch(searchText) {
+		//clear any existing highlights
+		clearHighlights();
+
+		if (!searchText || searchText.trim() === "") {
+			searchResults = [];
+			updateSearchInfo();
+			return;
+		}
+
+		const searchLower = searchText.toLowerCase();
+
+		//search through ALL focusable elements, not just those in the viewport
+		focusableElements = getAllFocusableElements();
+
+		searchResults = focusableElements.filter((element) => {
+			//check text content
+			const text = element.textContent.toLowerCase();
+			if (text.includes(searchLower)) {
+				return true;
+			}
+
+			//check aria-label
+			const ariaLabel = element.getAttribute("aria-label");
+			if (ariaLabel && ariaLabel.toLowerCase().includes(searchLower)) {
+				return true;
+			}
+
+			//check title
+			const title = element.getAttribute("title");
+			if (title && title.toLowerCase().includes(searchLower)) {
+				return true;
+			}
+
+			//check alt text for images
+			const imgElements = element.querySelectorAll("img");
+			for (const img of imgElements) {
+				const alt = img.getAttribute("alt");
+				if (alt && alt.toLowerCase().includes(searchLower)) {
+					return true;
+				}
+			}
+
+			//check placeholder for inputs
+			const placeholder = element.getAttribute("placeholder");
+			if (placeholder && placeholder.toLowerCase().includes(searchLower)) {
+				return true;
+			}
+
+			//check value for inputs
+			const value = element.value;
+			if (value && value.toLowerCase().includes(searchLower)) {
+				return true;
+			}
+
+			return false;
+		});
+
+		//highlight ALL matching elements with search-result class
+		searchResults.forEach((element) => {
+			highlightElement(element, true);
+		});
+
+		//find which results are currently in viewport
+		const visibleResults = searchResults.filter((element) => {
+			const rect = element.getBoundingClientRect();
+			return (
+				rect.top >= 0 &&
+				rect.left >= 0 &&
+				rect.bottom <= window.innerHeight &&
+				rect.right <= window.innerWidth
+			);
+		});
+
+		//set index to first result in viewport if any, otherwise the first result
+		if (visibleResults.length > 0) {
+			currentSearchIndex = searchResults.indexOf(visibleResults[0]);
+		} else {
+			currentSearchIndex = searchResults.length > 0 ? 0 : -1;
+		}
+
+		updateSearchInfo();
+
+		//highlight the current result with the main highlight
+		if (currentSearchIndex >= 0) {
+			highlightElement(searchResults[currentSearchIndex], false);
+		}
+	}
+
+	//update the search info text
+	function updateSearchInfo() {
+		const infoElement = document.getElementById("byebyemouse-search-info");
+		if (infoElement) {
+			if (searchResults.length > 0) {
+				infoElement.textContent = `${currentSearchIndex + 1}/${
+					searchResults.length
+				} matches`;
+			} else {
+				infoElement.textContent = "No matches";
+			}
+		}
+	}
+
+	//navigate to next/previous search result
+	function navigateSearchResults(direction) {
+		if (searchResults.length === 0) {
+			return;
+		}
+
+		if (direction === "next") {
+			currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+		} else {
+			currentSearchIndex =
+				(currentSearchIndex - 1 + searchResults.length) % searchResults.length;
+		}
+
+		const element = searchResults[currentSearchIndex];
+
+		//if in search mode, only highlight; otherwise focus
+		if (searchModeActive) {
+			highlightElement(element, false);
+			//make sure the element is visible even in search mode
+			ensureElementIsVisible(element);
+		} else {
+			focusElement(element);
+		}
+
+		updateSearchInfo();
+	}
+
 	//handle user input
 	function handleKeyDown(event) {
 		if (!navigationEnabled) {
 			return;
 		}
 
+		//if in search mode, don't process navigation keys
+		if (searchModeActive) {
+			return;
+		}
+
 		switch (event.key) {
+			case "f": //enter search mode
+				searchModeActive = true;
+				//store current focused element to return to later
+				if (lastFocusedElement) {
+					lastFocusedElement.classList.remove("highlight-focus");
+				}
+				createSearchBox();
+				event.preventDefault();
+				event.stopPropagation();
+				break;
+			case "n": //next search result
+				if (searchResults.length > 0) {
+					navigateSearchResults("next");
+					event.preventDefault();
+					event.stopPropagation();
+				}
+				break;
+			case "N": //previous search result
+				if (searchResults.length > 0) {
+					navigateSearchResults("prev");
+					event.preventDefault();
+					event.stopPropagation();
+				}
+				break;
 			case "l": //select next element
 				handleHorizontalNavigation("l");
 				event.preventDefault();
@@ -297,6 +661,10 @@
 				event.stopPropagation();
 				break;
 			case "Escape": //exit navigation
+				//clear search results when exiting navigation
+				searchResults = [];
+				currentSearchIndex = -1;
+				clearHighlights();
 				browser.runtime.sendMessage({
 					action: "updateBackgroundState",
 					state: false,
@@ -333,6 +701,10 @@
 		navigationEnabled = enable;
 		if (!navigationEnabled) {
 			unfocusElement();
+			hideSearchBox();
+			clearHighlights();
+			searchResults = [];
+			currentSearchIndex = -1;
 			console.log("Bye Bye Mouse disabled.");
 		} else {
 			handleHorizontalNavigation();
@@ -342,7 +714,11 @@
 
 	//start scrolling
 	document.addEventListener("keydown", (event) => {
-		if (navigationEnabled && ["j", "k"].includes(event.key)) {
+		if (
+			navigationEnabled &&
+			!searchModeActive &&
+			["j", "k"].includes(event.key)
+		) {
 			event.preventDefault();
 			event.stopPropagation();
 

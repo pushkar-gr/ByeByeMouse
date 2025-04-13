@@ -46,7 +46,18 @@
 	//focus given element and update lastFocusedElement
 	function focusElement(element) {
 		if (element) {
+			// Remove highlight from previously focused element
+			if (lastFocusedElement) {
+				lastFocusedElement.classList.remove("highlight-focus");
+			}
+
+			// Add highlight to newly focused element
+			element.classList.add("highlight-focus");
+
+			// Set focus on the element
 			element.focus();
+
+			// Update last focused element reference
 			lastFocusedElement = element;
 		}
 	}

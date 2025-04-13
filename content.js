@@ -276,7 +276,6 @@
 		elementToFocus = focusableElements[nextVisibleIndex];
 		if (elementToFocus) {
 			focusElement(elementToFocus);
-			elementToFocus.scrollIntoView({ block: "nearest", inline: "nearest" });
 		}
 	}
 

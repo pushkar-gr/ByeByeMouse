@@ -3,7 +3,7 @@
 		return; //prevent multiple injections
 	}
 	window.hasVimNavigation = true;
-	let navigationEnabled = false;
+	let navigationEnabled = true;
 	let searchModeActive = false;
 	let lastFocusedElement = null;
 	let focusableElements = [];

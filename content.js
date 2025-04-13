@@ -30,45 +30,47 @@
 
 	//get all the visible, interactive elements from the webpage that are not part of header/footer/navigation
 	function getVisibleFocusableElements() {
-		return Array.from(document.querySelectorAll("a[href], button")).filter(
-			(element) => {
-				//check if in allowed content area
-				if (!isElementInAllowedContent(element)) {
-					return false;
-				}
+		return Array.from(
+			document.querySelectorAll(
+				"a[href], button, input:not([type='hidden']), textarea, select, [contenteditable='true'], [tabindex]:not([tabindex='-1'])",
+			),
+		).filter((element) => {
+			//check if in allowed content area
+			if (!isElementInAllowedContent(element)) {
+				return false;
+			}
 
-				//get the element's bounding rectangle
-				const rect = element.getBoundingClientRect();
+			//get the element's bounding rectangle
+			const rect = element.getBoundingClientRect();
 
-				//check basic visibility properties
-				if (
-					rect.width <= 0 ||
-					rect.height <= 0 ||
-					getComputedStyle(element).visibility === "hidden" ||
-					getComputedStyle(element).display === "none" ||
-					parseFloat(getComputedStyle(element).opacity) === 0
-				) {
-					return false;
-				}
+			//check basic visibility properties
+			if (
+				rect.width <= 0 ||
+				rect.height <= 0 ||
+				getComputedStyle(element).visibility === "hidden" ||
+				getComputedStyle(element).display === "none" ||
+				parseFloat(getComputedStyle(element).opacity) === 0
+			) {
+				return false;
+			}
 
-				//check if the element is within the viewport
-				if (
-					rect.bottom < 0 ||
-					rect.right < 0 ||
-					rect.top > window.innerHeight ||
-					rect.left > window.innerWidth
-				) {
-					return false;
-				}
+			//check if the element is within the viewport
+			if (
+				rect.bottom < 0 ||
+				rect.right < 0 ||
+				rect.top > window.innerHeight ||
+				rect.left > window.innerWidth
+			) {
+				return false;
+			}
 
-				//check if element is truly visible and not behind other elements
-				if (!isActuallyVisible(element)) {
-					return false;
-				}
+			//check if element is truly visible and not behind other elements
+			if (!isActuallyVisible(element)) {
+				return false;
+			}
 
-				return true;
-			},
-		);
+			return true;
+		});
 	}
 
 	//function to check if an element is actually visible to the user
@@ -171,6 +173,23 @@
 
 			//update last focused element reference
 			lastFocusedElement = element;
+		}
+	}
+
+	//unfocus focused element and update lastFocusedElement
+	function unfocusElement() {
+		//check if there's a currently focused element
+		if (lastFocusedElement) {
+			//remove the highlight class
+			lastFocusedElement.classList.remove("highlight-focus");
+
+			//remove focus from the element
+			lastFocusedElement.blur();
+		}
+
+		//blur document's active element if it exists
+		if (document.activeElement && document.activeElement !== document.body) {
+			document.activeElement.blur();
 		}
 	}
 
@@ -314,9 +333,7 @@
 	function update(enable) {
 		navigationEnabled = enable;
 		if (!navigationEnabled) {
-			if (document.activeElement) {
-				document.activeElement.blur();
-			}
+			unfocusElement();
 			console.log("Bye Bye Mouse disabled.");
 		} else {
 			handleHorizontalNavigation();

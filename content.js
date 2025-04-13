@@ -167,7 +167,7 @@
 			element.classList.add("highlight-focus");
 
 			//set focus on the element
-			element.focus();
+			element.focus({ preventScroll: true });
 
 			//update last focused element reference
 			lastFocusedElement = element;

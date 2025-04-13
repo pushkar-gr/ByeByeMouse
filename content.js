@@ -8,9 +8,9 @@
 	let focusableElements = [];
 
 	let scrollInterval = null;
-	let currentSpeed = 100; // Base speed
-	const acceleration = 1.2; // Speed multiplier per interval
-	const maxSpeed = 800; // Maximum scroll speed
+	let currentSpeed = 100; //base speed
+	const acceleration = 1.2; //speed multiplier per interval
+	const maxSpeed = 800; //maximum scroll speed
 	let isScrolling = false;
 
 	//check if element is a header/footer/navigation
@@ -32,32 +32,144 @@
 	function getVisibleFocusableElements() {
 		return Array.from(document.querySelectorAll("a[href], button")).filter(
 			(element) => {
+				//check if in allowed content area
+				if (!isElementInAllowedContent(element)) {
+					return false;
+				}
+
+				//get the element's bounding rectangle
 				const rect = element.getBoundingClientRect();
-				return (
-					rect.width > 0 &&
-					rect.height > 0 &&
-					getComputedStyle(element).visibility !== "hidden" &&
-					isElementInAllowedContent(element)
-				);
+
+				//check basic visibility properties
+				if (
+					rect.width <= 0 ||
+					rect.height <= 0 ||
+					getComputedStyle(element).visibility === "hidden" ||
+					getComputedStyle(element).display === "none" ||
+					parseFloat(getComputedStyle(element).opacity) === 0
+				) {
+					return false;
+				}
+
+				//check if the element is within the viewport
+				if (
+					rect.bottom < 0 ||
+					rect.right < 0 ||
+					rect.top > window.innerHeight ||
+					rect.left > window.innerWidth
+				) {
+					return false;
+				}
+
+				//check if element is truly visible and not behind other elements
+				if (!isActuallyVisible(element)) {
+					return false;
+				}
+
+				return true;
 			},
+		);
+	}
+
+	//function to check if an element is actually visible to the user
+	function isActuallyVisible(element) {
+		const rect = element.getBoundingClientRect();
+
+		//if element has zero dimensions, it's not visible
+		if (rect.width === 0 || rect.height === 0) {
+			return false;
+		}
+
+		//check all parent elements
+		let parent = element.parentElement;
+		while (parent && parent !== document.body) {
+			const parentStyle = getComputedStyle(parent);
+
+			//check if parent or any ancestor has properties that would hide the element
+			if (
+				parentStyle.display === "none" ||
+				parentStyle.visibility === "hidden" ||
+				parseFloat(parentStyle.opacity) === 0 ||
+				(parentStyle.overflow === "hidden" &&
+					!isInViewOfParent(element, parent))
+			) {
+				return false;
+			}
+
+			//special case for collapsed elements (like accordions, dropdowns)
+			//check if parent has minimal height but element extends beyond it
+			if (
+				parent.clientHeight > 0 &&
+				parent.clientHeight < 10 &&
+				rect.height > parent.clientHeight
+			) {
+				return false;
+			}
+
+			//detect parents with aria attributes that indicate collapsed state
+			if (
+				parent.getAttribute("aria-expanded") === "false" ||
+				parent.getAttribute("aria-hidden") === "true" ||
+				parent.hasAttribute("hidden")
+			) {
+				return false;
+			}
+
+			parent = parent.parentElement;
+		}
+
+		//check if element is behind other elements (only visible elements at this point)
+		const centerX = rect.left + rect.width / 2;
+		const centerY = rect.top + rect.height / 2;
+
+		//get the top-most element at the center point of our target
+		const topElement = document.elementFromPoint(centerX, centerY);
+
+		//if the element or any of its children isn't the top element, then it's covered
+		if (
+			topElement &&
+			!element.contains(topElement) &&
+			!topElement.contains(element)
+		) {
+			//check if the topmost element is a transparent overlay
+			const topElStyle = getComputedStyle(topElement);
+			if (parseFloat(topElStyle.opacity) > 0.1) {
+				//allow slightly transparent overlays
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	//check if element is within the visible part of a parent with overflow
+	function isInViewOfParent(element, parent) {
+		const elemRect = element.getBoundingClientRect();
+		const parentRect = parent.getBoundingClientRect();
+
+		return !(
+			elemRect.top >= parentRect.bottom ||
+			elemRect.bottom <= parentRect.top ||
+			elemRect.left >= parentRect.right ||
+			elemRect.right <= parentRect.left
 		);
 	}
 
 	//focus given element and update lastFocusedElement
 	function focusElement(element) {
 		if (element) {
-			// Remove highlight from previously focused element
+			//remove highlight from previously focused element
 			if (lastFocusedElement) {
 				lastFocusedElement.classList.remove("highlight-focus");
 			}
 
-			// Add highlight to newly focused element
+			//add highlight to newly focused element
 			element.classList.add("highlight-focus");
 
-			// Set focus on the element
+			//set focus on the element
 			element.focus();
 
-			// Update last focused element reference
+			//update last focused element reference
 			lastFocusedElement = element;
 		}
 	}

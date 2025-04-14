@@ -3,7 +3,7 @@
 		return; //prevent multiple injections
 	}
 	window.hasVimNavigation = true;
-	let navigationEnabled = true;
+	let navigationEnabled = false;
 	let searchModeActive = false;
 	let lastFocusedElement = null;
 	let focusableElements = [];
@@ -339,7 +339,7 @@
 			}
 		}
 
-		//foucs element
+		//focus element
 		elementToFocus = focusableElements[nextVisibleIndex];
 		if (elementToFocus) {
 			focusElement(elementToFocus);
@@ -606,6 +606,32 @@
 		updateSearchInfo();
 	}
 
+	//Find the currently active element in the viewport
+	function findActiveElementInViewport() {
+		const activeElement = document.activeElement;
+
+		//Check if there's an active element and it's not the body or document
+		if (
+			activeElement &&
+			activeElement !== document.body &&
+			activeElement !== document
+		) {
+			//Check if it's visible and in the viewport
+			const rect = activeElement.getBoundingClientRect();
+			const isInViewport =
+				rect.top >= 0 &&
+				rect.left >= 0 &&
+				rect.bottom <= window.innerHeight &&
+				rect.right <= window.innerWidth;
+
+			if (isInViewport && isActuallyVisible(activeElement)) {
+				return activeElement;
+			}
+		}
+
+		return null;
+	}
+
 	//handle user input
 	function handleKeyDown(event) {
 		if (!navigationEnabled) {
@@ -661,9 +687,6 @@
 					action: "updateBackgroundState",
 					state: false,
 				});
-				// if (document.activeElement) {
-				// 	document.activeElement.blur();
-				// }
 				event.preventDefault();
 				event.stopPropagation();
 				break;
@@ -699,7 +722,17 @@
 			currentSearchIndex = -1;
 			console.log("Bye Bye Mouse disabled.");
 		} else {
-			handleHorizontalNavigation();
+			//check if there's already an active element in the viewport
+			const activeElement = findActiveElementInViewport();
+
+			if (activeElement) {
+				//if there's an active element, focus it
+				focusElement(activeElement);
+			} else {
+				//otherwise, use the default navigation behavior
+				handleHorizontalNavigation();
+			}
+
 			console.log("Bye Bye Mouse enabled (scroll/focus).");
 		}
 	}

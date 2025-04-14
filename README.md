@@ -1,54 +1,83 @@
 # ByeByeMouse
 
-**Navigate Webpages Using Your Keyboard!**
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Firefox](https://img.shields.io/badge/Firefox-Compatible-FF7139)
 
-Tired of constantly switching between your keyboard and mouse? ByeByeMouse lets you navigate and interact with web pages using only your keyboard, boosting your productivity and reducing strain.
+A Firefox extension that enables mouse-free browsing with intuitive keyboard shortcuts, allowing you to navigate the web efficiently without reaching for your mouse.
 
-## Features
+## 🚀 Features
 
-* **Keyboard Navigation:**
-    * `j`: Scroll down the page.
-    * `k`: Scroll up the page.
-    * `h`: Select the previous focusable element (links, buttons, input fields, etc.).
-    * `l`: Select the next focusable element.
-* **Toggle Navigation:**
-    * Use the extension's popup icon to easily enable or disable keyboard navigation.
-    * Alternatively, press `Ctrl + Space` (or `Cmd + Space` on macOS) to toggle navigation quickly.
+- **Focus Navigation**: Use `h` and `l` to move between focusable elements
+- **Scrolling**: Use `j` and `k` to scroll down and up
+- **Search**: Use `f` to activate find mode and `n`/`N` to navigate through results
+- **Quick Toggle**: Use `Ctrl+Space` or extension popup to enable/disable functionality
 
-## Installation (For Development/Testing)
+## 📋 Installation
 
-**Firefox:**
+### From Firefox Add-ons Store
+1. Visit the [ByeByeMouse Firefox Add-on page](https://addons.mozilla.org/en-US/firefox/addon/bye-bye-mouse/)
+2. Click "Add to Firefox"
+3. Grant the necessary permissions
 
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/pushkar-gr/ByeByeMouse.git
-    cd ByeByeMouse
-    ```
-2.  **Open Firefox's Debugging Page:**
-    * In Firefox, type `about:debugging#/runtime/this-firefox` in the address bar and press Enter.
-3.  **Load Temporary Add-on:**
-    * Click the "Load Temporary Add-on..." button.
-    * Navigate to the cloned repository and select the `manifest.json` file.
-4.  The extension is now installed and active. Note that temporary add-ons are removed when you close Firefox.
+### Manual Installation (Developer)
+1. Clone this repository
+   ```
+   git clone https://github.com/pushkar-gr/ByeByeMouse.git
+   ```
+2. Open Firefox and navigate to `about:debugging`
+3. Click "This Firefox"
+4. Click "Load Temporary Add-on..."
+5. Navigate to the cloned repository and select any file (like `manifest.json`)
 
-**Note:** For permanent installation, you will need to package the extension and submit it to the Firefox Add-ons store.
+## 🎮 Usage
 
-## Usage
+After installation, ByeByeMouse will be active on all web pages. Use the following keyboard shortcuts:
 
-1.  **Enable Navigation:**
-    * Click the ByeByeMouse icon in your Firefox toolbar.
-    * or press `Ctrl + Space` (or `Cmd + Space`).
-2.  **Navigate:**
-    * Use the `j`, `k`, `h`, and `l` keys to navigate the page as described in the "Features" section.
-3.  **Disable Navigation:**
-    * Click the ByeByeMouse icon again.
-    * or press `Ctrl + Space` (or `Cmd + Space`).
+| Shortcut | Action |
+|----------|--------|
+| `h` | Focus on previous element |
+| `l` | Focus on next element |
+| `j` | Scroll down |
+| `k` | Scroll up |
+| `f` | Activate find mode |
+| `n` | Go to next search result |
+| `N` | Go to previous search result |
+| `Ctrl+Space` | Toggle extension on/off |
 
-## Contributing
+You can also enable/disable the extension by clicking its icon in the toolbar.
 
-Contributions are welcome! If you have ideas for improvements or find any issues, please feel free to:
+## 🧩 How It Works
 
-* Open an issue on GitHub.
-* Submit a pull request with your changes.
+ByeByeMouse intercepts keyboard events on web pages and translates them into navigation actions. It maintains focus management, scrolling behavior, and integrates with the browser's native find functionality.
 
-Let's make web navigation more efficient and accessible!
+## 🛠️ Development
+
+### Project Structure
+
+- `manifest.json`: Extension configuration
+- `content.js`: Content script that runs on web pages
+- `popup/`: Contains the extension popup UI
+- `background.js`: Background script for extension-wide functionality
+
+### Contributing
+
+Contributions are welcome! Feel free to:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👏 Acknowledgments
+
+- Inspired by Vim-style keyboard navigation
+- Thanks to all contributors who have helped shape this extension
+
+---
+
+Copyright © 2025 [pushkar-gr](https://github.com/pushkar-gr)

@@ -244,14 +244,6 @@
 		if (lastFocusedElement) {
 			//remove the highlight class
 			lastFocusedElement.classList.remove("highlight-focus");
-
-			//remove focus from the element
-			lastFocusedElement.blur();
-		}
-
-		//blur document's active element if it exists
-		if (document.activeElement && document.activeElement !== document.body) {
-			document.activeElement.blur();
 		}
 	}
 
@@ -669,9 +661,9 @@
 					action: "updateBackgroundState",
 					state: false,
 				});
-				if (document.activeElement) {
-					document.activeElement.blur();
-				}
+				// if (document.activeElement) {
+				// 	document.activeElement.blur();
+				// }
 				event.preventDefault();
 				event.stopPropagation();
 				break;

@@ -792,4 +792,9 @@
 			update(request.state);
 		}
 	});
+
+	browser.runtime.sendMessage({
+		action: "updateBackgroundState",
+		state: !navigationEnabled,
+	});
 })();

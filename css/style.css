@@ -1,0 +1,32 @@
+/* Visual styles for ByeByeMouse */
+
+/* Search result highlight */
+.search-result {
+  outline: 2px dashed #4d90fe !important;
+  background-color: rgba(77, 144, 254, 0.1) !important;
+}
+
+/* Focused element highlight */
+.highlight-focus {
+  outline: 2px solid #4d90fe !important;
+  box-shadow: 0 0 5px rgba(77, 144, 254, 0.8) !important;
+  background-color: rgba(77, 144, 254, 0.2) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* State indicator styles */
+#byebyemouse-state-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  color: white;
+  z-index: 999999;
+  transition: all 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}

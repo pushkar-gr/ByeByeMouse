@@ -1,33 +1,92 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-  <meta charset="utf-8">
-  <title>Keyboard Nav</title>
-  <link rel="stylesheet" type="text/css" href="popup.css">
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 240px;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 10px;
+    }
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .toggle {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+      margin-right: 10px;
+    }
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #4d90fe;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    .info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+    .state-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .disabled { background-color: #888888; }
+    .navigation { background-color: #4d90fe; }
+    .find { background-color: #ff9800; }
+    .text { background-color: #4caf50; }
+  </style>
 </head>
-
 <body>
-  <div class="kb-nav-container">
-    <div class="kb-nav-header">
-      <h1>Keyboard Navigation</h1>
-    </div>
-
-    <div class="kb-nav-controls">
-      <div class="toggle-container">
-        <label class="switch">
-          <input type="checkbox" id="toggleExtension">
-          <span class="slider"></span>
-        </label>
-        <span class="status-text" id="statusText">Disabled</span>
-      </div>
-    </div>
-
-    <div class="kb-nav-footer">
-      <p>Ctrl+Space to toggle</p>
+  <h2>Bye-Bye-Mouse</h2>
+  <div class="toggle-container">
+    <label class="toggle">
+      <input type="checkbox" id="toggleExtension">
+      <span class="slider"></span>
+    </label>
+    <div>
+      <div class="state-indicator" id="stateIndicator"></div>
+      <span id="statusText">Disabled</span>
     </div>
   </div>
+  <div class="info" id="shortcutInfo"></div>
+  <div class="info" id="stateInfo"></div>
   <script src="popup.js"></script>
 </body>
-
 </html>

@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "Bye-Bye-Mouse",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Navigate web pages using Vim-like keys (h, j, k, l).",
 	"browser_specific_settings": {
 		"gecko": {
@@ -16,7 +16,21 @@
 		{
 			"matches": ["<all_urls>"],
 			"js": ["content.js"],
-			"css": ["style.css"]
+			"css": ["css/style.css"]
+		}
+	],
+	"web_accessible_resources": [
+		{
+			"resources": [
+				"js/dom-utils.js",
+				"js/element-utils.js",
+				"js/state-indicator.js",
+				"js/navigation-mode.js",
+				"js/find-mode.js",
+				"js/text-mode.js",
+				"js/state-manager.js"
+			],
+			"matches": ["<all_urls>"]
 		}
 	],
 	"action": {

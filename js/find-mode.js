@@ -36,6 +36,7 @@ const FindMode = {
 			this.stateManager.setState(this.stateManager.STATES.NAVIGATION);
 			event.preventDefault();
 			event.stopPropagation();
+      return;
 		}
 
 		//search box input is handled by its own event listener

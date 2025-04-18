@@ -94,6 +94,8 @@ const StateManager = {
 				ElementUtils.isTextInput(event.target)
 			) {
 				this.setState(this.STATES.TEXT);
+			} else if (this.currentState === this.STATES.TEXT) {
+				this.setState(this.STATES.NAVIGATION);
 			}
 			switch (this.currentState) {
 				case this.STATES.NAVIGATION:

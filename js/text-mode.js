@@ -12,7 +12,14 @@ const TextMode = {
 
 	cleanup() {},
 
-	handleKeyDown(event) {},
+	handleKeyDown(event) {
+		if (event.key === "Escape") {
+			this.stateManager.setState(this.stateManager.STATES.NAVIGATION);
+			event.preventDefault();
+			event.stopPropagation();
+			return;
+		}
+	},
 
 	handleKeyUp(event) {},
 

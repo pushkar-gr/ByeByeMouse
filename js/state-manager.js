@@ -89,6 +89,12 @@ const StateManager = {
 
 		//detect focus changes
 		document.addEventListener("focusin", (event) => {
+			if (
+				this.currentState === this.STATES.NAVIGATION &&
+				ElementUtils.isTextInput(event.target)
+			) {
+				this.setState(this.STATES.TEXT);
+			}
 			switch (this.currentState) {
 				case this.STATES.NAVIGATION:
 					NavigationMode.handleFocusIn(event);

@@ -13,7 +13,7 @@ const TextMode = {
 	cleanup() {},
 
 	handleKeyDown(event) {
-		if (event.key === "Escape") {
+		if (["Escape", "Enter"].includes(event.key)) {
 			this.stateManager.setState(this.stateManager.STATES.NAVIGATION);
 			event.preventDefault();
 			event.stopPropagation();
